@@ -1,9 +1,8 @@
-from typing import Optional, Any, Dict
+from typing import Optional
 from env_client import websocket_policy_server as _websocket_policy_server
 from policy import LerobotPolicy, LerobotPolicyConfig
 import dataclasses
 import tyro
-from typing import Optional
 
 
 @dataclasses.dataclass
@@ -14,7 +13,7 @@ class PolicyServerConfig:
     api_key: Optional[str] = None
 
 
-def create_act_policy_server(config: PolicyServerConfig) -> _websocket_policy_server.WebsocketPolicyServer:
+def create_policy_server(config: PolicyServerConfig) -> _websocket_policy_server.WebsocketPolicyServer:
     policy = LerobotPolicy(config.policy)
     server = _websocket_policy_server.WebsocketPolicyServer(
         policy=policy,
@@ -26,5 +25,5 @@ def create_act_policy_server(config: PolicyServerConfig) -> _websocket_policy_se
 
 if __name__ == "__main__":
     config = tyro.cli(PolicyServerConfig)
-    server = create_act_policy_server(config)
+    server = create_policy_server(config)
     server.serve_forever()

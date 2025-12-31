@@ -209,3 +209,10 @@ __marimo__/
 **.safetensors
 **.bag
 **.png
+
+real/*
+sim/
+output
+outputs
+1.zip
+magic

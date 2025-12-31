@@ -366,7 +366,7 @@ class RTGTrajectoryGenerator:
 
 def main(args: Args):
     env = gym.make(
-        "LeRobotEnv-v0",
+        "FakeLeRobotEnv-v0",
         config=args.env,
     )
     env = MonitorWrapper(env, port=args.monitor_port, host=args.monitor_host, include_images=True)
@@ -392,6 +392,8 @@ def main(args: Args):
         rtg.reset()
         
         done = False
+        actions = []
+        gt_actions = []
         inference_times = []
         step_count = 0
         loop_times = []
@@ -439,7 +441,12 @@ def main(args: Args):
             # 4. Execute action
             # ========================================
             obs, reward, done, truncated, info = env.step(action)
+            actions.append(action)
             step_count += 1
+            
+            gt_action = info.get("gt_action")
+            assert gt_action is not None, "Ground truth action missing in info"
+            gt_actions.append(gt_action)
             
             # ========================================
             # 5. Control fixed frequency
@@ -454,6 +461,35 @@ def main(args: Args):
                 # If loop time exceeds expected by too much, issue warning
                 print(f"  [Step {step_count}] WARNING: Loop time {loop_elapsed*1000:.2f}ms "
                       f"exceeds target {dt*1000:.2f}ms")
+        
+        # ========================================
+        # Visualization and statistics
+        # ========================================
+        actions = np.array(actions)
+        gt_actions = np.array(gt_actions)
+        steps = np.arange(len(actions))
+        num_actions = actions.shape[1]
+        
+        # Plot actions comparison
+        fig, axs = plt.subplots(num_actions, 1, figsize=(12, 3 * num_actions))
+        if num_actions == 1:
+            axs = [axs]
+        
+        for i in range(num_actions):
+            axs[i].plot(steps, actions[:, i], label="RTG Predicted Action", 
+                       linewidth=2, alpha=0.8)
+            if gt_actions[:, i].any():
+                axs[i].plot(steps, gt_actions[:, i], label="Ground Truth Action", 
+                           linestyle='--', linewidth=1.5, alpha=0.7)
+            axs[i].set_xlabel("Step")
+            axs[i].set_ylabel(f"Action Dim {i}")
+            axs[i].legend()
+            axs[i].grid(alpha=0.3)
+        
+        plt.suptitle(f"Episode {episode} - RTG Trajectory Generation")
+        plt.tight_layout()
+        plt.savefig(env.run_dir / f"episode_{episode}_actions.png", dpi=150)
+        plt.close(fig)
         
         # Print episode statistics
         avg_inference_time = np.mean(inference_times) if inference_times else 0

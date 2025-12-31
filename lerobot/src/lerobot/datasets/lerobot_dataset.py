@@ -213,8 +213,8 @@ class LeRobotDatasetMetadata:
                 f"Episode index {ep_index} out of range. Episodes: {len(self.episodes) if self.episodes else 0}"
             )
         ep = self.episodes[ep_index]
-        chunk_idx = ep[f"videos/{vid_key}/chunk_index"]
-        file_idx = ep[f"videos/{vid_key}/file_index"]
+        chunk_idx = int(ep[f"videos/{vid_key}/chunk_index"])
+        file_idx = int(ep[f"videos/{vid_key}/file_index"])
         fpath = self.video_path.format(video_key=vid_key, chunk_index=chunk_idx, file_index=file_idx)
         return Path(fpath)
 
